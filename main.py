@@ -1,5 +1,6 @@
 from bs4 import BeautifulSoup
-import json
+from flask import Flask
+app = Flask(__name__)
 
 
 def scrape_to_variable():
@@ -7,35 +8,18 @@ def scrape_to_variable():
     municipalities = []
     soup = BeautifulSoup(open("data.html"), features="lxml")
     for i in soup.find_all('a'):
-        title = i.get('title')
-        title = title.replace('Le ', '')
-        title = title.replace('La ', '')
-        title = title.replace(', Tunisia', '')
-        title = title.replace('(municipality)', '')
-        title = title.strip()
-        # print(title)
+        title = i.get('title').replace('Le ', '').replace('La ', '').replace(
+            ', Tunisia', '').replace('(municipality)', '').strip()
+
         if title.find('Governorate') != -1:
             name = title.replace('Governorate', '').strip()
-            states.append({'name': name, 'id': len(states) + 1})
+            states.append({'name': name, 'code': len(states) + 1})
         else:
-            municipalities.append({'name': title, 'id': len(
-                municipalities) + 1, 'gouv_id': len(states)})
+            municipalities.append({'name': title, 'gov_code': len(states)})
     return states,  municipalities
 
 
-def write_to_json(states, municipalities):
-    if len(states) == 0:
-        raise OSError('please use scrape_to_variable() first')
-
-    with open('output/municipalities.json', 'w') as json_file:
-        json.dump(municipalities, json_file, indent=2)
-
-    with open('output/states.json', 'w') as json_file:
-        json.dump(states, json_file, indent=2)
-
-
-if __name__ == '__main__':
-    # should always be called
+@app.route('/')
+def hello_world():
     states, municipalities = scrape_to_variable()
-
-    write_to_json(states, municipalities)
+    return {"data": {"states": states, "municipalities": municipalities}}
