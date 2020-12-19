@@ -1,13 +1,10 @@
 from bs4 import BeautifulSoup
-from collections import defaultdict
-import mysql.connector as mysql
 import json
-
-states = []
-municipalities = []
 
 
 def scrape_to_variable():
+    states = []
+    municipalities = []
     soup = BeautifulSoup(open("data.html"), features="lxml")
     for i in soup.find_all('a'):
         title = i.get('title')
@@ -21,10 +18,12 @@ def scrape_to_variable():
             name = title.replace('Governorate', '').strip()
             states.append({'name': name, 'id': len(states) + 1})
         else:
-            municipalities.append({'name': title, 'id': len(municipalities) + 1, 'gouv_id': len(states)})
+            municipalities.append({'name': title, 'id': len(
+                municipalities) + 1, 'gouv_id': len(states)})
+    return states,  municipalities
 
 
-def write_to_json():
+def write_to_json(states, municipalities):
     if len(states) == 0:
         raise OSError('please use scrape_to_variable() first')
 
@@ -35,35 +34,8 @@ def write_to_json():
         json.dump(states, json_file, indent=2)
 
 
-def insert_into_db():
-    if len(states) == 0:
-        raise OSError('please use scrape_to_variable() first')
-
-    db = mysql.connect(
-        host="localhost",
-        user="root",
-        passwd="root",
-        database="covoiturage"
-    )
-    cursor = db.cursor()
-
-    for i in states:
-        query = "INSERT INTO gouvernorat (id, name) VALUES (%s,%s)"
-        value = (i['id'], i['name'])
-        cursor.execute(query, value)
-
-    for i in municipalities:
-        query = "INSERT INTO ville(id,name,gouv_id) VALUES (%s,%s,%s)"
-        value = i['id'], i['name'], i['gouv_id']
-        cursor.execute(query, value)
-
-    db.commit()
-
-
 if __name__ == '__main__':
     # should always be called
-    scrape_to_variable()
+    states, municipalities = scrape_to_variable()
 
-    # write output to json
-    write_to_json()
-    # insert_into_db()
+    write_to_json(states, municipalities)
