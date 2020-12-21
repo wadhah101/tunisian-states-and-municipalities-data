@@ -6,7 +6,7 @@ app = Flask(__name__)
 def scrape_to_variable():
     states = []
     municipalities = []
-    soup = BeautifulSoup(open("data.html"), features="lxml")
+    soup = BeautifulSoup(open("data.txt"), features="lxml")
     for i in soup.find_all('a'):
         title = i.get('title').replace('Le ', '').replace('La ', '').replace(
             ', Tunisia', '').replace('(municipality)', '').strip()
